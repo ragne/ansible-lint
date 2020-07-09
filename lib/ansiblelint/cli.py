@@ -153,6 +153,9 @@ def get_cli_parser() -> argparse.ArgumentParser:
     parser.add_argument('--version', action='version',
                         version='%(prog)s {ver!s}'.format(ver=__version__),
                         )
+    parser.add_argument('--skip-comments', action="store_true",
+                        help="Skip all comments in file when linting (disables inline #noqa)"
+                        )
     parser.add_argument(dest='playbook', nargs='*',
                         help="One or more files or paths. When missing it will "
                         " enable auto-detection mode.")

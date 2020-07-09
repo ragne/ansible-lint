@@ -70,7 +70,7 @@ class AnsibleLintRule(object):
             matches.append(m)
         return matches
 
-    def matchtasks(self, file: str, text: str) -> List[MatchError]:
+    def matchtasks(self, file: str, text: str, skip_comments: bool = False) -> List[MatchError]:
         matches: List[MatchError] = []
         if not self.matchtask:
             return matches
@@ -81,8 +81,8 @@ class AnsibleLintRule(object):
         yaml = ansiblelint.utils.parse_yaml_linenumbers(text, file['path'])
         if not yaml:
             return matches
-
-        yaml = append_skipped_rules(yaml, text, file['type'])
+        if not skip_comments:
+            yaml = append_skipped_rules(yaml, text, file['type'])
 
         for task in ansiblelint.utils.get_normalized_tasks(yaml, file):
             if self.id in task.get('skipped_rules', ()):
@@ -115,7 +115,7 @@ class AnsibleLintRule(object):
             linenumber = play[ansiblelint.utils.LINE_NUMBER_KEY]
         return linenumber
 
-    def matchyaml(self, file: str, text: str) -> List[MatchError]:
+    def matchyaml(self, file: str, text: str, skip_comments: bool = False) -> List[MatchError]:
         matches: List[MatchError] = []
         if not self.matchplay:
             return matches
@@ -126,8 +126,8 @@ class AnsibleLintRule(object):
 
         if isinstance(yaml, dict):
             yaml = [yaml]
-
-        yaml = ansiblelint.skip_utils.append_skipped_rules(yaml, text, file['type'])
+        if not skip_comments:
+            yaml = ansiblelint.skip_utils.append_skipped_rules(yaml, text, file['type'])
 
         for play in yaml:
             if self.id in play.get('skipped_rules', ()):
@@ -174,7 +174,7 @@ def load_plugins(directory: str) -> List[AnsibleLintRule]:
 
 class RulesCollection(object):
 
-    def __init__(self, rulesdirs=None) -> None:
+    def __init__(self, rulesdirs=None, skip_comments: bool = False) -> None:
         """Initialize a RulesCollection instance."""
         if rulesdirs is None:
             rulesdirs = []
@@ -183,6 +183,7 @@ class RulesCollection(object):
         for rulesdir in self.rulesdirs:
             _logger.debug("Loading rules from %s", rulesdir)
             self.extend(load_plugins(rulesdir))
+        self.skip_comments = skip_comments
         self.rules = sorted(self.rules, key=lambda r: r.id)
 
     def register(self, obj):
@@ -219,8 +220,8 @@ class RulesCollection(object):
                 rule_definition.add(rule.id)
                 if set(rule_definition).isdisjoint(skip_list):
                     matches.extend(rule.matchlines(playbookfile, text))
-                    matches.extend(rule.matchtasks(playbookfile, text))
-                    matches.extend(rule.matchyaml(playbookfile, text))
+                    matches.extend(rule.matchtasks(playbookfile, text, self.skip_comments))
+                    matches.extend(rule.matchyaml(playbookfile, text, self.skip_comments))
 
         return matches
 

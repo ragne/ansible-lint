@@ -82,7 +82,7 @@ def main() -> int:
         rulesdirs = options.rulesdir + [DEFAULT_RULESDIR]
     else:
         rulesdirs = options.rulesdir or [DEFAULT_RULESDIR]
-    rules = RulesCollection(rulesdirs)
+    rules = RulesCollection(rulesdirs, options.skip_comments)
 
     if options.listrules:
         formatted_rules = rules if options.format == 'plain' else rules_as_rst(rules)

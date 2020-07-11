@@ -736,3 +736,11 @@ def expand_paths_vars(paths: List[str]) -> List[str]:
     """Expand the environment or ~ variables in a list."""
     paths = [expand_path_vars(p) for p in paths]
     return paths
+
+def run_parallel(iterable, fn, *args, **kwargs):
+    from joblib import Parallel, delayed
+
+    p = Parallel(n_jobs=-1, verbose=10) # all cpu
+
+    res = p(delayed(fn)(i, *args, **kwargs) for i in iterable)
+    return res

@@ -740,7 +740,7 @@ def expand_paths_vars(paths: List[str]) -> List[str]:
 def run_parallel(iterable, fn, *args, **kwargs):
     from joblib import Parallel, delayed
 
-    p = Parallel(n_jobs=-1, verbose=10) # all cpu
+    p = Parallel(n_jobs=-1, verbose=10, batch_size=4) # all cpu
 
     res = p(delayed(fn)(i, *args, **kwargs) for i in iterable)
     return res

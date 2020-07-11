@@ -26,13 +26,13 @@ import pathlib
 import sys
 from typing import Any, Set
 
-from ansiblelint import cli
-from ansiblelint.constants import DEFAULT_RULESDIR
-from ansiblelint.generate_docs import rules_as_rst
-from ansiblelint.utils import normpath, get_playbooks_and_roles
-import ansiblelint.formatters as formatters
-from ansiblelint.runner import Runner
-from ansiblelint.rules import RulesCollection
+from . import cli
+from .constants import DEFAULT_RULESDIR
+from .generate_docs import rules_as_rst
+from .utils import normpath, get_playbooks_and_roles
+from . import formatters
+from .runner import Runner
+from .rules import RulesCollection
 
 _logger = logging.getLogger(__name__)
 
@@ -123,6 +123,11 @@ def main() -> int:
 
     for match in matches:
         print(formatter.format(match, options.colored))
+
+    from .skip_utils import load_data
+
+    print(f"load_data: {load_data.cache_info()}\n"
+          )
 
     if len(matches):
         return 2

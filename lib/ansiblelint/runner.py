@@ -1,11 +1,12 @@
 """Runner implementation."""
 import logging
 import os
-from typing import List, Set
+from typing import List, Set, Dict
 
 import ansiblelint.utils
 import ansiblelint.file_utils
 import ansiblelint.skip_utils
+from .rules import RulesCollection
 from .errors import MatchError
 from .rules.LoadingFailureRule import LoadingFailureRule
 
@@ -19,7 +20,7 @@ class Runner(object):
     def __init__(self, rules, playbook, tags, skip_list, exclude_paths,
                  verbosity=0, checked_files=None) -> None:
         """Initialize a Runner instance."""
-        self.rules = rules
+        self.rules: RulesCollection = rules
         self.playbooks = set()
         # assume role if directory
         if os.path.isdir(playbook):
@@ -56,7 +57,7 @@ class Runner(object):
 
     def run(self) -> List:
         """Execute the linting process."""
-        files = list()
+        files: List[Dict[str, str]] = list()
         for playbook in self.playbooks:
             if self.is_excluded(playbook[0]) or playbook[1] == 'role':
                 continue
@@ -95,7 +96,7 @@ class Runner(object):
 
         return matches
 
-def run(file, self):
+def run(file, self: 'Runner'):
     _logger.debug(
         "Examining %s of type %s",
         ansiblelint.file_utils.normpath(file['path']),

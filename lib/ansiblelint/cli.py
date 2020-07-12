@@ -134,6 +134,9 @@ def get_cli_parser() -> argparse.ArgumentParser:
     parser.add_argument('-x', dest='skip_list', default=[], action='append',
                         help="only check rules whose id/tags do not "
                         "match these values")
+    parser.add_argument('--parallel', action='store_true',
+                        help="If enabled program will try to parallelize parsing"
+                        )
     parser.add_argument('--nocolor', dest='colored',
                         default=hasattr(sys.stdout, 'isatty') and sys.stdout.isatty(),
                         action='store_false',
@@ -170,6 +173,9 @@ def merge_config(file_config, cli_config) -> NamedTuple:
     if 'parseable' in file_config:
         cli_config.parseable = (cli_config.parseable or
                                 file_config['parseable'])
+
+    if 'parallel' in file_config:
+        cli_config.parallel = (cli_config.parallel or file_config['parallel'])
 
     if 'parseable_severity' in file_config:
         cli_config.parseable_severity = (cli_config.parseable_severity or

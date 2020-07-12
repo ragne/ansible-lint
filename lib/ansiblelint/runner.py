@@ -18,7 +18,7 @@ class Runner(object):
     """Runner class performs the linting process."""
 
     def __init__(self, rules, playbook, tags, skip_list, exclude_paths,
-                 verbosity=0, checked_files=None) -> None:
+                 verbosity=0, checked_files=None, use_parallel: bool = False) -> None:
         """Initialize a Runner instance."""
         self.rules: RulesCollection = rules
         self.playbooks = set()
@@ -36,6 +36,7 @@ class Runner(object):
         if checked_files is None:
             checked_files = set()
         self.checked_files = checked_files
+        self.use_parallel = use_parallel
 
     def _update_exclude_paths(self, exclude_paths: List[str]) -> None:
         if exclude_paths:
@@ -87,10 +88,13 @@ class Runner(object):
 
         # remove files that have already been checked
         files = [x for x in files if x['path'] not in self.checked_files]
-
-        res = ansiblelint.utils.run_parallel(files, run, self.rules, self.tags, self.skip_list)
-        import itertools
-        matches.extend(itertools.chain(*res))
+        if self.use_parallel:
+            res = ansiblelint.utils.run_parallel(files, run, self.rules, self.tags, self.skip_list)
+            import itertools
+            matches.extend(itertools.chain(*res))
+        else:
+            for file in files:
+                matches.extend(run(file, self.rules, self.tags, self.skip_list))
         # update list of checked files
         self.checked_files.update([x['path'] for x in files])
 

@@ -121,7 +121,7 @@ def main() -> int:
     for playbook in playbooks:
         runner = Runner(rules, playbook, options.tags,
                         options.skip_list, options.exclude_paths,
-                        options.verbosity, checked_files)
+                        options.verbosity, checked_files, options.parallel)
         matches.extend(runner.run())
 
     matches.sort(

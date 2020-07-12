@@ -73,8 +73,14 @@ def append_skipped_rules(pyyaml_data: str, file_text: str, file_type: FileType):
     return yaml_skip
 
 
-@lru_cache()
-def load_data(file_text: str):
+@lru_cache(maxsize=128)
+def load_data(file_text: str) -> Any:
+    """
+    This is the main culprit for slow performance, each rule asks for loading yaml again and again;
+    ideally the `maxsize` on the decorator above MUST be great or equal total number of rules
+    :param file_text: raw text to parse
+    :return: Loaded yaml
+    """
     yaml = ruamel.yaml.YAML()
     return yaml.load(file_text)
 

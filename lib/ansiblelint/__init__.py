@@ -19,8 +19,8 @@
 # THE SOFTWARE.
 """Main ansible-lint package."""
 
-from .rules import AnsibleLintRule
-from .version import __version__
+from ansiblelint.rules import AnsibleLintRule
+from ansiblelint.version import __version__
 
 
 __all__ = (

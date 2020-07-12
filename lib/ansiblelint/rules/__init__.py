@@ -8,10 +8,10 @@ import logging
 import os
 from typing import List, Dict
 
-from ..skip_utils import get_rule_skips_from_line
-from ..skip_utils import append_skipped_rules
-from ..errors import MatchError
-from .. import utils
+from ansiblelint.skip_utils import get_rule_skips_from_line
+from ansiblelint.skip_utils import append_skipped_rules
+from ansiblelint.errors import MatchError
+import ansiblelint.utils
 
 
 _logger = logging.getLogger(__name__)
@@ -78,13 +78,13 @@ class AnsibleLintRule(object):
         if file['type'] == 'meta':
             return matches
 
-        yaml = utils.parse_yaml_linenumbers(text, file['path'])
+        yaml = ansiblelint.utils.parse_yaml_linenumbers(text, file['path'])
         if not yaml:
             return matches
 
         yaml = append_skipped_rules(yaml, text, file['type'])
 
-        for task in utils.get_normalized_tasks(yaml, file):
+        for task in ansiblelint.utils.get_normalized_tasks(yaml, file):
             if self.id in task.get('skipped_rules', ()):
                 continue
 
@@ -97,10 +97,10 @@ class AnsibleLintRule(object):
             message = None
             if isinstance(result, str):
                 message = result
-            task_msg = "Task/Handler: " + utils.task_to_str(task)
+            task_msg = "Task/Handler: " + ansiblelint.utils.task_to_str(task)
             m = MatchError(
                 message=message,
-                linenumber=task[utils.LINE_NUMBER_KEY],
+                linenumber=task[ansiblelint.utils.LINE_NUMBER_KEY],
                 line=task_msg,
                 filename=file['path'],
                 rule=self)
@@ -112,22 +112,22 @@ class AnsibleLintRule(object):
         try:
             linenumber, = optional_linenumber
         except ValueError:
-            linenumber = play[utils.LINE_NUMBER_KEY]
+            linenumber = play[ansiblelint.utils.LINE_NUMBER_KEY]
         return linenumber
 
-    def matchyaml(self, file: str, text: str) -> List[MatchError]:
+    def matchyaml(self, file: Dict[str, str], text: str) -> List[MatchError]:
         matches: List[MatchError] = []
         if not self.matchplay:
             return matches
 
-        yaml = utils.parse_yaml_linenumbers(text, file['path'])
+        yaml = ansiblelint.utils.parse_yaml_linenumbers(text, file['path'])
         if not yaml:
             return matches
 
         if isinstance(yaml, dict):
             yaml = [yaml]
 
-        yaml = append_skipped_rules(yaml, text, file['type'])
+        yaml = ansiblelint.skip_utils.append_skipped_rules(yaml, text, file['type'])
 
         for play in yaml:
             if self.id in play.get('skipped_rules', ()):
@@ -178,7 +178,7 @@ class RulesCollection(object):
         """Initialize a RulesCollection instance."""
         if rulesdirs is None:
             rulesdirs = []
-        self.rulesdirs = utils.expand_paths_vars(rulesdirs)
+        self.rulesdirs = ansiblelint.utils.expand_paths_vars(rulesdirs)
         self.rules: List[AnsibleLintRule] = []
         for rulesdir in self.rulesdirs:
             _logger.debug("Loading rules from %s", rulesdir)

@@ -26,13 +26,13 @@ import pathlib
 import sys
 from typing import Any, Set
 
-from . import cli
-from .constants import DEFAULT_RULESDIR
-from .generate_docs import rules_as_rst
-from .utils import normpath, get_playbooks_and_roles
-from . import formatters
-from .runner import Runner
-from .rules import RulesCollection
+from ansiblelint import cli
+from ansiblelint.constants import DEFAULT_RULESDIR
+from ansiblelint.generate_docs import rules_as_rst
+from ansiblelint.utils import normpath, get_playbooks_and_roles, ruamel_has_c_ext, pyyaml_has_c_ext
+import ansiblelint.formatters as formatters
+from ansiblelint.runner import Runner
+from ansiblelint.rules import RulesCollection
 
 _logger = logging.getLogger(__name__)
 
@@ -93,6 +93,15 @@ def main() -> int:
         print(rules.listtags())
         return 0
 
+    if not ruamel_has_c_ext():
+        _logger.info("It seems that you don't have C-extention compiled for ruamel.yaml,"
+                        " performance will suffer!")
+
+    if not pyyaml_has_c_ext():
+        _logger.info("It seems that you don't have C-extention compiled for pyyaml,"
+                        " performance will suffer!")
+
+
     if isinstance(options.tags, str):
         options.tags = options.tags.split(',')
 
@@ -123,11 +132,6 @@ def main() -> int:
 
     for match in matches:
         print(formatter.format(match, options.colored))
-
-    from .skip_utils import load_data
-
-    print(f"load_data: {load_data.cache_info()}\n"
-          )
 
     if len(matches):
         return 2

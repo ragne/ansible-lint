@@ -88,7 +88,7 @@ class Runner(object):
         # remove files that have already been checked
         files = [x for x in files if x['path'] not in self.checked_files]
 
-        res = ansiblelint.utils.run_parallel(files, run, self)
+        res = ansiblelint.utils.run_parallel(files, run, self.rules, self.tags, self.skip_list)
         import itertools
         matches.extend(itertools.chain(*res))
         # update list of checked files
@@ -96,9 +96,10 @@ class Runner(object):
 
         return matches
 
-def run(file, self: 'Runner'):
+
+def run(file, rules: 'RulesCollection', tags: Set, skip_list: List):
     _logger.debug(
         "Examining %s of type %s",
         ansiblelint.file_utils.normpath(file['path']),
         file['type'])
-    return self.rules.run(file, tags=set(self.tags), skip_list=self.skip_list)
+    return rules.run(file, tags=set(tags), skip_list=skip_list)

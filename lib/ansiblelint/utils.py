@@ -29,6 +29,7 @@ import pprint
 import subprocess
 
 import yaml
+from joblib import delayed, Parallel
 from yaml.composer import Composer
 from yaml.representer import RepresenterError
 
@@ -46,7 +47,7 @@ from ansible.plugins.loader import module_loader
 from ansible.template import Templar
 from ansiblelint.constants import ANSIBLE_FAILURE_RC
 from ansiblelint.errors import MatchError
-from typing import Callable, ItemsView, List, Tuple
+from typing import Callable, ItemsView, List, Tuple, TypeVar
 
 
 # ansible-lint doesn't need/want to know about encrypted secrets, so we pass a
@@ -55,6 +56,9 @@ from typing import Callable, ItemsView, List, Tuple
 DEFAULT_VAULT_PASSWORD = 'x'
 
 PLAYBOOK_DIR = os.environ.get('ANSIBLE_PLAYBOOK_DIR', None)
+
+T = TypeVar('T')
+Callback = Callable[..., T]
 
 
 _logger = logging.getLogger(__name__)
@@ -737,10 +741,35 @@ def expand_paths_vars(paths: List[str]) -> List[str]:
     paths = [expand_path_vars(p) for p in paths]
     return paths
 
-def run_parallel(iterable, fn, *args, **kwargs):
-    from joblib import Parallel, delayed
 
-    p = Parallel(n_jobs=-1, verbose=10, batch_size=4) # all cpu
+def run_parallel(iterable, fn: Callback, *args, **kwargs):
+    """
+    Runs given function in parallel using joblib for all elements in iterable
+    By default uses all available cores
+    :param iterable: iterator to use
+    :param fn: function to call on each element, should accept element as first argument
+    :param args: function arguments
+    :param kwargs: function keyword arguments
+    :return: aggregated results (e.g list of results)
+    """
+    p = Parallel(n_jobs=-1, verbose=0) # all cpu
 
-    res = p(delayed(fn)(i, *args, **kwargs) for i in iterable)
+    callback = delayed(fn)
+    res = p(callback(i, *args, **kwargs) for i in iterable)
     return res
+
+
+def pyyaml_has_c_ext() -> bool:
+    try:
+        from yaml import CLoader
+        return True
+    except ImportError:
+        return False
+
+
+def ruamel_has_c_ext() -> bool:
+    try:
+        from ruamel.yaml import CLoader
+        return True
+    except ImportError:
+        return False
